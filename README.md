@@ -374,4 +374,4 @@ vercel --prod
 
 
 
-Built with ❤️ by the Cheese team
+Built with ❤️ by the CheesePay team
