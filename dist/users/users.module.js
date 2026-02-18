@@ -15,7 +15,7 @@ const users_entity_1 = require("./users.entity");
 const user_service_1 = require("./user.service");
 const user_controller_1 = require("./user.controller");
 const audit_log_1 = require("./audit/audit-log");
-const auth_guards_1 = require("./auth/auth.guards");
+const auth_guards_1 = require("../auth/auth.guards");
 let UserModule = class UserModule {
 };
 exports.UserModule = UserModule;

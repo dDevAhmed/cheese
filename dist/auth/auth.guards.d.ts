@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import Redis from 'ioredis';
-import { UserRole } from '../user.entity';
+import { UserRole } from '../users/users.entity';
 export interface JwtPayload {
     userId: string;
     merchantId: string | null;

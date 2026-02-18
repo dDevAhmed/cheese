@@ -14,7 +14,6 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RolesGuard = exports.OptionalJwtAuthGuard = exports.JwtAuthGuard = exports.CurrentUser = exports.Public = exports.Roles = exports.IS_PUBLIC_KEY = exports.ROLES_KEY = void 0;
 const common_1 = require("@nestjs/common");
@@ -116,7 +115,8 @@ exports.JwtAuthGuard = JwtAuthGuard;
 exports.JwtAuthGuard = JwtAuthGuard = __decorate([
     (0, common_1.Injectable)(),
     __param(1, (0, ioredis_1.InjectRedis)()),
-    __metadata("design:paramtypes", [typeof (_a = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _a : Object, ioredis_2.default,
+    __metadata("design:paramtypes", [jwt_1.JwtService,
+        ioredis_2.default,
         core_1.Reflector])
 ], JwtAuthGuard);
 let OptionalJwtAuthGuard = class OptionalJwtAuthGuard {
@@ -171,7 +171,8 @@ exports.OptionalJwtAuthGuard = OptionalJwtAuthGuard;
 exports.OptionalJwtAuthGuard = OptionalJwtAuthGuard = __decorate([
     (0, common_1.Injectable)(),
     __param(1, (0, ioredis_1.InjectRedis)()),
-    __metadata("design:paramtypes", [typeof (_b = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _b : Object, ioredis_2.default])
+    __metadata("design:paramtypes", [jwt_1.JwtService,
+        ioredis_2.default])
 ], OptionalJwtAuthGuard);
 let RolesGuard = class RolesGuard {
     reflector;

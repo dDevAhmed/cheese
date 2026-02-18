@@ -12,8 +12,8 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 import { Request } from 'express';
-import { UserRole } from '../user.entity';
-import { RequestContext } from '../user.types';
+import { UserRole } from '../users/users.entity';
+import { RequestContext } from '../users/user.types';
 
 // ================================================================
 // JWT PAYLOAD INTERFACE
@@ -47,8 +47,7 @@ export const IS_PUBLIC_KEY = 'isPublic';
  * @Roles(UserRole.SUPER_ADMIN, UserRole.MERCHANT_OWNER)
  * @Get('admin/users')
  */
-export const Roles = (...roles: UserRole[]) =>
-  SetMetadata(ROLES_KEY, roles);
+export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);
 
 /**
  * Mark a route as public — bypasses JwtAuthGuard entirely.

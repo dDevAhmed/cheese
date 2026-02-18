@@ -6,7 +6,11 @@ import { User } from './users.entity'; // ← Changed from './user.entity' to ma
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { AuditLogModule } from './audit/audit-log';
-import { JwtAuthGuard, OptionalJwtAuthGuard, RolesGuard } from './auth/auth.guards';
+import {
+  JwtAuthGuard,
+  OptionalJwtAuthGuard,
+  RolesGuard,
+} from '../auth/auth.guards';
 
 /**
  * UserModule
