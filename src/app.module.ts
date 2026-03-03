@@ -12,24 +12,24 @@ import { AccountingModule } from './accounting/accounting.module';
 import { DevicesModule } from './devices/devices.module';
 
 // ── Auth entities ─────────────────────────────────────────────────────────────
-import { User }                 from './users/entities/user.entity';
-import { Otp }                  from './otp/entities/otp.entity';
-import { RefreshToken }         from './tokens/entities/refresh-token.entity';
-import { Referral }             from './referrals/entities/referral.entity';
-import { WaitlistReservation }  from './waitlist/entities/waitlist-reservation.entity';
+import { User } from './users/entities/user.entity';
+import { Otp } from './otp/entities/otp.entity';
+import { RefreshToken } from './tokens/entities/refresh-token.entity';
+import { Referral } from './referrals/entities/referral.entity';
+import { WaitlistReservation } from './waitlist/entities/waitlist-reservation.entity';
 
 // ── Accounting entities ───────────────────────────────────────────────────────
-import { Account }      from './accounting/entities/account.entity';
-import { Transaction }  from './accounting/entities/transaction.entity';
-import { LedgerEntry }  from './accounting/entities/ledger-entry.entity';
+import { Account } from './accounting/entities/account.entity';
+import { Transaction } from './accounting/entities/transaction.entity';
+import { LedgerEntry } from './accounting/entities/ledger-entry.entity';
 
 // ── Blockchain entities ───────────────────────────────────────────────────────
-import { BlockchainWallet }      from './blockchain/entities/blockchain-wallet.entity';
+import { BlockchainWallet } from './blockchain/entities/blockchain-wallet.entity';
 import { BlockchainTransaction } from './blockchain/entities/blockchain-transaction.entity';
 
 // ── Device entities ───────────────────────────────────────────────────────────
-import { Device }          from './devices/entities/device.entity';
-import { SignatureNonce }  from './nonces/entities/nonce.entity';
+import { Device } from './devices/entities/device.entity';
+import { SignatureNonce } from './nonces/entities/nonce.entity';
 
 // ── Cross-cutting ─────────────────────────────────────────────────────────────
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
@@ -92,21 +92,31 @@ import appConfig from './config/app.config';
   imports: [
     // ── Config ──────────────────────────────────────────────────────────────
     ConfigModule.forRoot({
-      isGlobal:    true,
+      isGlobal: true,
       envFilePath: ['.env.local', '.env'],
-      load:        [appConfig],
+      load: [appConfig],
       validate: (raw: Record<string, unknown>) => {
         const required: string[] = [
           // Database
-          'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD',
+          'DB_HOST',
+          'DB_PORT',
+          'DB_NAME',
+          'DB_USER',
+          'DB_PASSWORD',
           // Auth / JWT
-          'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'WAITLIST_TOKEN_SECRET',
+          'JWT_ACCESS_SECRET',
+          'JWT_REFRESH_SECRET',
+          'WAITLIST_TOKEN_SECRET',
           // Blockchain
-          'BLOCKCHAIN_RPC_URL', 'PLATFORM_WALLET_PRIVATE_KEY', 'WALLET_CONTRACT_ADDRESS',
+          'BLOCKCHAIN_RPC_URL',
+          'PLATFORM_WALLET_PRIVATE_KEY',
+          'WALLET_CONTRACT_ADDRESS',
         ];
         const missing = required.filter((k) => !raw[k]);
         if (missing.length) {
-          throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+          throw new Error(
+            `Missing required environment variables: ${missing.join(', ')}`,
+          );
         }
         return raw;
       },
@@ -116,17 +126,21 @@ import appConfig from './config/app.config';
     // Single Postgres connection shared by all modules.
     // All 12 entities are registered here so TypeORM has full schema visibility.
     TypeOrmModule.forRootAsync({
-      inject:     [ConfigService],
+      inject: [ConfigService],
       useFactory: (cs: ConfigService) => ({
-        type:     'postgres',
-        host:     cs.getOrThrow<string>('DB_HOST'),
-        port:     parseInt(cs.getOrThrow<string>('DB_PORT'), 10),
+        type: 'postgres',
+        host: cs.getOrThrow<string>('DB_HOST'),
+        port: parseInt(cs.getOrThrow<string>('DB_PORT'), 10),
         database: cs.getOrThrow<string>('DB_NAME'),
         username: cs.getOrThrow<string>('DB_USER'),
         password: cs.getOrThrow<string>('DB_PASSWORD'),
-        ssl: cs.get<string>('DB_SSL') === 'true'
-          ? { rejectUnauthorized: cs.get<string>('DB_SSL_REJECT_UNAUTHORIZED') !== 'false' }
-          : false,
+        ssl:
+          cs.get<string>('DB_SSL') === 'true'
+            ? {
+                rejectUnauthorized:
+                  cs.get<string>('DB_SSL_REJECT_UNAUTHORIZED') !== 'false',
+              }
+            : false,
 
         // ── Entities ───────────────────────────────────────────────────────
         // Auth (5):       User, Otp, RefreshToken, Referral, WaitlistReservation
@@ -134,29 +148,47 @@ import appConfig from './config/app.config';
         // Blockchain (2): BlockchainWallet, BlockchainTransaction
         // Device (2):     Device, SignatureNonce
         entities: [
-          User, Otp, RefreshToken, Referral, WaitlistReservation,
-          Account, Transaction, LedgerEntry,
-          BlockchainWallet, BlockchainTransaction,
-          Device, SignatureNonce,
+          User,
+          Otp,
+          RefreshToken,
+          Referral,
+          WaitlistReservation,
+          Account,
+          Transaction,
+          LedgerEntry,
+          BlockchainWallet,
+          BlockchainTransaction,
+          Device,
+          SignatureNonce,
         ],
 
         // Run migrations via CLI in CI/CD, not automatically at boot.
         // Set DB_RUN_MIGRATIONS=true only in ephemeral/review environments.
-        migrations:    [__dirname + '/database/migrations/*{.ts,.js}'],
+        migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
         migrationsRun: cs.get<string>('DB_RUN_MIGRATIONS') === 'true',
-        synchronize:   false, // NEVER true in production
+        synchronize: false, // NEVER true in production
 
-        logging: cs.get<string>('NODE_ENV') === 'development'
-          ? ['query', 'error', 'warn', 'migration']
-          : ['error', 'warn', 'migration'],
+        logging:
+          cs.get<string>('NODE_ENV') === 'development'
+            ? ['query', 'error', 'warn', 'migration']
+            : ['error', 'warn', 'migration'],
 
         extra: {
           // pg pool — rule of thumb: max = (vCPU count × 2) + disk spindles
-          max:                     parseInt(cs.get<string>('DB_POOL_MAX')              ?? '20',    10),
-          min:                     parseInt(cs.get<string>('DB_POOL_MIN')              ?? '2',     10),
-          idleTimeoutMillis:       parseInt(cs.get<string>('DB_IDLE_TIMEOUT_MS')      ?? '30000', 10),
-          connectionTimeoutMillis: parseInt(cs.get<string>('DB_CONNECT_TIMEOUT_MS')   ?? '5000',  10),
-          statement_timeout:       parseInt(cs.get<string>('DB_STATEMENT_TIMEOUT_MS') ?? '30000', 10),
+          max: parseInt(cs.get<string>('DB_POOL_MAX') ?? '20', 10),
+          min: parseInt(cs.get<string>('DB_POOL_MIN') ?? '2', 10),
+          idleTimeoutMillis: parseInt(
+            cs.get<string>('DB_IDLE_TIMEOUT_MS') ?? '30000',
+            10,
+          ),
+          connectionTimeoutMillis: parseInt(
+            cs.get<string>('DB_CONNECT_TIMEOUT_MS') ?? '5000',
+            10,
+          ),
+          statement_timeout: parseInt(
+            cs.get<string>('DB_STATEMENT_TIMEOUT_MS') ?? '30000',
+            10,
+          ),
         },
       }),
     }),
@@ -165,12 +197,14 @@ import appConfig from './config/app.config';
     // Global default: 60 requests / 60 s per IP.
     // Per-route overrides use @Throttle({ default: { ttl, limit } }).
     ThrottlerModule.forRootAsync({
-      inject:     [ConfigService],
+      inject: [ConfigService],
       useFactory: (cs: ConfigService) => ({
-        throttlers: [{
-          ttl:   parseInt(cs.get<string>('THROTTLE_TTL')   ?? '60000', 10),
-          limit: parseInt(cs.get<string>('THROTTLE_LIMIT') ?? '60',    10),
-        }],
+        throttlers: [
+          {
+            ttl: parseInt(cs.get<string>('THROTTLE_TTL') ?? '60000', 10),
+            limit: parseInt(cs.get<string>('THROTTLE_LIMIT') ?? '60', 10),
+          },
+        ],
       }),
     }),
 
@@ -178,18 +212,18 @@ import appConfig from './config/app.config';
     ScheduleModule.forRoot(),
 
     // ── Feature modules (load order matters — see header comment) ─────────────
-    BlockchainModule,  // 1st — RPC connection, WalletService, BlockchainScheduler
-    AuthModule,        // 2nd — OTP verify calls WalletService.createWallet()
-    AccountingModule,  // 3rd — debit/credit/balance via WalletService
-    DevicesModule,     // 4th — device key registration + signature verification
+    BlockchainModule, // 1st — RPC connection, WalletService, BlockchainScheduler
+    AuthModule, // 2nd — OTP verify calls WalletService.createWallet()
+    AccountingModule, // 3rd — debit/credit/balance via WalletService
+    DevicesModule, // 4th — device key registration + signature verification
   ],
 
   providers: [
     // JWT guard applied globally. Decorate public routes with @Public().
-    { provide: APP_GUARD,       useClass: JwtAuthGuard                },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
 
     // Unified error envelope: { success, statusCode, code, message, timestamp, path }
-    { provide: APP_FILTER,      useClass: GlobalExceptionFilter       },
+    { provide: APP_FILTER, useClass: GlobalExceptionFilter },
 
     // Serialises all NUMERIC/DECIMAL values as strings in every API response.
     // Prevents IEEE 754 float precision loss on financial amounts.
