@@ -3,36 +3,84 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./UserWallet.sol";
 
 /**
  * @title UserWalletFactory
- * @notice Factory contract to deploy and manage UserWallet contracts
- * @dev One factory manages all user wallets
+ * @notice Deploys and manages all Cheese user wallet contracts.
+ *
+ * ── Username registry ────────────────────────────────────────────────────────
+ *
+ *   Each wallet is keyed by two identifiers:
+ *
+ *     userId   — internal platform ID (e.g. email address). Hashed to bytes32
+ *                before storage so no PII lives on-chain.
+ *     username — the @handle users see. Lowercased and hashed for lookup.
+ *                Used for P2P transfers and displayed in the app.
+ *
+ *   Mappings:
+ *     userIdHash   → wallet address   (internal lookup)
+ *     usernameHash → wallet address   (public P2P lookup)
+ *     wallet       → display username (reverse lookup for receipts)
+ *
+ * ── P2P transfers ────────────────────────────────────────────────────────────
+ *
+ *   transferByUsername(fromUsername, toUsername, amount)
+ *     — resolves both usernames to wallet addresses
+ *     — calls sender.transferToUser(recipientWallet, amount)
+ *     — USDC moves directly wallet → wallet (no vault involvement)
+ *     — emits Transfer event for both wallets
+ *
+ * ── Access ───────────────────────────────────────────────────────────────────
+ *
+ *   onlyBackend  — platform EOA. All money-movement functions.
+ *   onlyOwner    — contract deployer (Ownable). Admin config only.
  */
-contract UserWalletFactory is Ownable, Pausable {
+contract UserWalletFactory is Ownable, Pausable, ReentrancyGuard {
+
     // ========== STATE VARIABLES ==========
 
     address public backend;
     address public vault;
     address public usdc;
 
-    // Mappings
-    mapping(bytes32 => address) public userWallets; // userIdHash => wallet address
-    mapping(address => bool) public isWallet; // Quick check if address is a user wallet
+    // userId (hashed) → wallet address
+    mapping(bytes32 => address) public userWallets;
 
-    // Array for iteration
-    address[] public allWallets;
+    // username (lowercased, hashed) → wallet address
+    mapping(bytes32 => address) public usernameWallets;
 
-    // Counter
-    uint256 public totalWallets;
+    // wallet address → display username (original casing)
+    mapping(address => string)  public walletUsername;
+
+    // quick membership check
+    mapping(address => bool)    public isWallet;
+
+    // iteration
+    address[]  public allWallets;
+    uint256    public totalWallets;
 
     // ========== EVENTS ==========
 
-    event WalletCreated(bytes32 indexed userIdHash, address indexed wallet, uint256 timestamp);
+    event WalletCreated(
+        bytes32 indexed userIdHash,
+        bytes32 indexed usernameHash,
+        address indexed wallet,
+        string  username,
+        uint256 timestamp
+    );
+
+    event Transfer(
+        address indexed fromWallet,
+        address indexed toWallet,
+        string  fromUsername,
+        string  toUsername,
+        uint256 amount,
+        uint256 timestamp
+    );
 
     event BackendUpdated(address indexed oldBackend, address indexed newBackend);
-
     event VaultUpdated(address indexed oldVault, address indexed newVault);
 
     // ========== MODIFIERS ==========
@@ -44,83 +92,144 @@ contract UserWalletFactory is Ownable, Pausable {
 
     // ========== CONSTRUCTOR ==========
 
-    constructor(address _backend, address _vault, address _usdc) Ownable(msg.sender) {
+    constructor(address _backend, address _vault, address _usdc)
+        Ownable(msg.sender)
+    {
         require(_backend != address(0), "Invalid backend");
-        require(_vault != address(0), "Invalid vault");
-        require(_usdc != address(0), "Invalid USDC");
+        require(_vault   != address(0), "Invalid vault");
+        require(_usdc    != address(0), "Invalid USDC");
 
         backend = _backend;
-        vault = _vault;
-        usdc = _usdc;
+        vault   = _vault;
+        usdc    = _usdc;
     }
 
     // ========== FACTORY FUNCTIONS ==========
 
     /**
-     * @notice Create a new UserWallet for a user
-     * @param userId Unique user identifier (email)
-     * @return wallet Address of created wallet
+     * @notice Deploy a new UserWallet for a user and register their username.
+     *
+     * @param  userId    Internal platform identifier (e.g. email).
+     *                   Stored as keccak256 hash — no PII on-chain.
+     * @param  username  Display handle (@alice). Must be unique (case-insensitive).
+     *                   Stored in original casing; lookups are lowercased.
+     *
+     * @return wallet    Address of the newly deployed UserWallet contract.
      */
-    function createWallet(string memory userId) external onlyBackend whenNotPaused returns (address wallet) {
-        bytes32 userIdHash = keccak256(abi.encodePacked(userId));
+    function createWallet(string memory userId, string memory username)
+        external
+        onlyBackend
+        whenNotPaused
+        returns (address wallet)
+    {
+        require(bytes(userId).length   > 0, "Invalid userId");
+        require(bytes(username).length > 0, "Invalid username");
 
-        require(userWallets[userIdHash] == address(0), "Wallet already exists");
-        require(bytes(userId).length > 0, "Invalid userId");
+        bytes32 userIdHash   = keccak256(abi.encodePacked(userId));
+        bytes32 usernameHash = keccak256(abi.encodePacked(_toLower(username)));
 
-        // Deploy new UserWallet
+        require(userWallets[userIdHash]     == address(0), "Wallet already exists");
+        require(usernameWallets[usernameHash] == address(0), "Username already taken");
+
+        // Deploy — pass address(this) as factory so the wallet can validate
+        // factory-initiated calls (e.g. transferByUsername).
         UserWallet newWallet = new UserWallet(
             backend,
+            address(this), // factory
             vault,
             usdc,
-            address(0) // No owner initially
+            address(0)     // owner — set later via setOwner() after KYC
         );
 
         wallet = address(newWallet);
 
-        // Store mappings
+        // Register by userId
         userWallets[userIdHash] = wallet;
+
+        // Register by username
+        usernameWallets[usernameHash] = wallet;
+        walletUsername[wallet]        = username;
+
+        // Index
         isWallet[wallet] = true;
         allWallets.push(wallet);
         totalWallets++;
 
-        emit WalletCreated(userIdHash, wallet, block.timestamp);
+        emit WalletCreated(userIdHash, usernameHash, wallet, username, block.timestamp);
+    }
+
+    // ========== TRANSFER ==========
+
+    /**
+     * @notice Transfer USDC between two users identified by username.
+     *
+     * The sender's UserWallet calls usdc.transfer(recipientWallet, amount)
+     * directly — no vault involvement. The factory is authorised by both
+     * wallets via the onlyBackendOrFactory modifier.
+     *
+     * @param  fromUsername  Sender's @handle (case-insensitive)
+     * @param  toUsername    Recipient's @handle (case-insensitive)
+     * @param  amount        USDC amount in token units (6 decimals)
+     */
+    function transferByUsername(
+        string memory fromUsername,
+        string memory toUsername,
+        uint256 amount
+    )
+        external
+        onlyBackend
+        nonReentrant
+        whenNotPaused
+    {
+        require(amount > 0, "Amount must be > 0");
+
+        bytes32 fromHash = keccak256(abi.encodePacked(_toLower(fromUsername)));
+        bytes32 toHash   = keccak256(abi.encodePacked(_toLower(toUsername)));
+
+        address fromWallet = usernameWallets[fromHash];
+        address toWallet   = usernameWallets[toHash];
+
+        require(fromWallet != address(0), "Sender username not found");
+        require(toWallet   != address(0), "Recipient username not found");
+        require(fromWallet != toWallet,   "Cannot transfer to self");
+
+        // Execute — UserWallet.transferToUser has onlyBackendOrFactory
+        UserWallet(fromWallet).transferToUser(toWallet, amount);
+
+        emit Transfer(
+            fromWallet,
+            toWallet,
+            fromUsername,
+            toUsername,
+            amount,
+            block.timestamp
+        );
     }
 
     // ========== VIEW FUNCTIONS ==========
 
-    /**
-     * @notice Get wallet address for a user
-     * @param userId User identifier
-     * @return Wallet address (address(0) if doesn't exist)
-     */
+    /// @notice Resolve an internal userId to its wallet address.
     function getWallet(string memory userId) external view returns (address) {
-        bytes32 userIdHash = keccak256(abi.encodePacked(userId));
-        return userWallets[userIdHash];
+        return userWallets[keccak256(abi.encodePacked(userId))];
     }
 
-    /**
-     * @notice Check if user has a wallet
-     * @param userId User identifier
-     * @return true if wallet exists
-     */
+    /// @notice Resolve a @username to its wallet address (case-insensitive).
+    ///         Returns address(0) if username is not registered.
+    function getWalletByUsername(string memory username) external view returns (address) {
+        return usernameWallets[keccak256(abi.encodePacked(_toLower(username)))];
+    }
+
+    /// @notice Check whether a userId has a wallet.
     function hasWallet(string memory userId) external view returns (bool) {
-        bytes32 userIdHash = keccak256(abi.encodePacked(userId));
-        return userWallets[userIdHash] != address(0);
+        return userWallets[keccak256(abi.encodePacked(userId))] != address(0);
     }
 
-    /**
-     * @notice Get total number of wallets created
-     * @return Total wallet count
-     */
-    function getTotalWallets() external view returns (uint256) {
-        return totalWallets;
+    /// @notice Check whether a @username is already registered (case-insensitive).
+    function isUsernameTaken(string memory username) external view returns (bool) {
+        return usernameWallets[keccak256(abi.encodePacked(_toLower(username)))] != address(0);
     }
 
-    /**
-     * @notice Get wallet at specific index
-     * @param index Array index
-     * @return Wallet address
-     */
+    /// @notice Return a wallet address by its array index (for off-chain iteration).
     function getWalletAtIndex(uint256 index) external view returns (address) {
         require(index < allWallets.length, "Index out of bounds");
         return allWallets[index];
@@ -128,43 +237,33 @@ contract UserWalletFactory is Ownable, Pausable {
 
     // ========== ADMIN FUNCTIONS ==========
 
-    /**
-     * @notice Update backend address
-     * @param newBackend New backend operator address
-     */
     function updateBackend(address newBackend) external onlyOwner {
         require(newBackend != address(0), "Invalid backend");
-
-        address oldBackend = backend;
+        emit BackendUpdated(backend, newBackend);
         backend = newBackend;
-
-        emit BackendUpdated(oldBackend, newBackend);
     }
 
-    /**
-     * @notice Update vault address
-     * @param newVault New CheeseVault address
-     */
     function updateVault(address newVault) external onlyOwner {
         require(newVault != address(0), "Invalid vault");
-
-        address oldVault = vault;
+        emit VaultUpdated(vault, newVault);
         vault = newVault;
-
-        emit VaultUpdated(oldVault, newVault);
     }
 
-    /**
-     * @notice Pause wallet creation
-     */
-    function pause() external onlyOwner {
-        _pause();
-    }
+    function pause()   external onlyOwner { _pause(); }
+    function unpause() external onlyOwner { _unpause(); }
 
-    /**
-     * @notice Unpause wallet creation
-     */
-    function unpause() external onlyOwner {
-        _unpause();
+    // ========== INTERNAL HELPERS ==========
+
+    /// @dev ASCII-only lowercase conversion for username normalisation.
+    ///      Usernames are expected to contain only a-z, 0-9, _ and . characters.
+    function _toLower(string memory str) internal pure returns (string memory) {
+        bytes memory bStr  = bytes(str);
+        bytes memory bLower = new bytes(bStr.length);
+        for (uint256 i = 0; i < bStr.length; i++) {
+            bLower[i] = (bStr[i] >= 0x41 && bStr[i] <= 0x5A)
+                ? bytes1(uint8(bStr[i]) + 32)
+                : bStr[i];
+        }
+        return string(bLower);
     }
 }
