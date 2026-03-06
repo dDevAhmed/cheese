@@ -1,9 +1,0 @@
-node_modules/
-.next/
-out/
-.env
-.env.local
-.env.*.local
-*.log
-public/sw.js
-public/workbox-*.js
