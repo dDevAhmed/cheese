@@ -18,7 +18,7 @@ import { useBankTransfer }                      from '@/lib/hooks/useBanks'
 import { useAuthStore }                         from '@/lib/stores/authStore'
 import { useQueryClient }                       from '@tanstack/react-query'
 import { QUERY_KEYS }                           from '@/constants'
-import { signTransaction }                      from '@/lib/crypto/deviceSigning'
+import { signTransaction, hashPin }             from '@/lib/crypto/deviceSigning'
 import { ScreenHeader, AmountNumpad, PinPad, ErrorBanner } from '../../shared/UI'
 import type { SendMethod }                      from '@/lib/stores/uiStore'
 
@@ -188,7 +188,8 @@ export function SendScreen() {
     setPinErr(null)
     setSendStep('processing')
     try {
-      const { valid } = await verifyPin.mutateAsync(enteredPin)
+      const pinHash = await hashPin(enteredPin, deviceKey?.deviceId ?? '')
+      const { valid } = await verifyPin.mutateAsync({ pinHash, deviceId: deviceKey?.deviceId ?? '' })
       if (!valid) {
         setSendStep('pin')
         setPinErr('Incorrect PIN. Please try again.')
