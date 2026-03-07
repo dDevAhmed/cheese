@@ -122,6 +122,6 @@ export const useUiStore = create<UiState>()(
       name: 'cheese-ui',
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ theme: s.theme, balanceVisible: s.balanceVisible, onboarded: s.onboarded, autoLockMinutes: s.autoLockMinutes, biometricEnabled: s.biometricEnabled }),
-    } as Parameters<typeof persist>[1],
+    },
   ),
 )

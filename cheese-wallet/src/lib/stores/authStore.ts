@@ -78,7 +78,7 @@ export const useAuthStore = create<AuthState>()(
         deviceKey:  state.deviceKey,
         user:       state.user,
       }),
-    } as Parameters<typeof persist>[1],
+    },
   ),
 )
 
