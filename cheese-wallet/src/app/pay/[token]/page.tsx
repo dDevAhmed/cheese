@@ -7,6 +7,7 @@
 // ─────────────────────────────────────────────────────────
 import React, { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { API_BASE_URL } from '@/constants'
 import { QueryProvider } from '@/providers/QueryProvider'
 import { useResolvePayLink, usePayPayLink } from '@/lib/hooks/useWallet'
 import { useAuthStore } from '@/lib/stores/authStore'
@@ -17,8 +18,7 @@ import type { PayLinkData } from '@/types'
 // ── Exchange rate helper (standalone, no hook dependency) ──
 async function fetchRate(): Promise<number> {
   try {
-    const API = (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_API_URL : undefined) ?? 'https://api.cheesewallet.app/v1'
-    const r = await fetch(`${API}/rates/current`)
+    const r = await fetch(`${API_BASE_URL}/rates/current`)
     const j = await r.json()
     return parseFloat(j?.data?.effectiveRate ?? '0')
   } catch {
@@ -325,10 +325,9 @@ function StatusPage({ status, link }: { status: 'paid' | 'expired' | 'cancelled'
 // ══════════════════════════════════════════════════════════
 function PayPageInner({ token }: { token: string }) {
   const router     = useRouter()
-  const user       = useAuthStore((s) => s.user)
-  const deviceKey  = useAuthStore(s => s.deviceKey)
-  const isAuth     = useAuthStore(s => s.isAuthenticated)
-  const { setSendRecipient, setSendMethod } = useUiStore()
+  const user       = useAuthStore((s: { user: import('@/types').User | null }) => s.user)
+  const deviceKey  = useAuthStore((s: { deviceKey: import('@/types').DeviceKey | null }) => s.deviceKey)
+  const isAuth     = useAuthStore((s: { isAuthenticated: boolean }) => s.isAuthenticated)
 
   const { data: link, isLoading, error } = useResolvePayLink(token)
   const { mutateAsync: payLink, isPending: paying } = usePayPayLink()
@@ -348,8 +347,8 @@ function PayPageInner({ token }: { token: string }) {
       router.push(`/wallet?paytoken=${token}`)
       return
     }
-    if (!user.pinHash) {
-      setPayError('Please set a PIN in your Cheese Wallet before paying')
+    if (!deviceKey?.deviceId) {
+      setPayError('Device not registered. Please open Cheese Wallet and log in first.')
       return
     }
     setPayError(null)
