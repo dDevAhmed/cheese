@@ -237,7 +237,7 @@ ${tx.hash ? `<div class="row"><span class="key">Tx Hash</span><span class="val">
 // ════════════════════════════════════════════════════════
 export function AppLockScreen() {
   const { goTo }         = useUiStore()
-  const { user, deviceKey } = useAuthStore()
+  const { user, deviceKey, logout } = useAuthStore()
   const [pin, setPin]    = useState('')
   const [err, setErr]    = useState(false)
 
@@ -247,8 +247,8 @@ export function AppLockScreen() {
     if (entered.length < 4) return
     const devId = deviceKey?.deviceId
     if (!devId) {
-      // No device key — send to login
-      goTo('login')
+      // No device key — force re-auth
+      logout()
       return
     }
     try {
