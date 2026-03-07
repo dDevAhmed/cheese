@@ -126,8 +126,8 @@ export function ProfileScreen() {
         <div className="profile-menu">
           <MenuGroup items={[
             {
-              label:   displayUser?.kycStatus === 'approved' ? 'Identity Verified' : 'Verify Identity',
-              sub:     displayUser?.kycStatus === 'approved' ? 'KYC approved · All features unlocked' : 'Complete KYC to unlock higher limits',
+              label:   displayUser?.kycStatus === 'verified' ? 'Identity Verified' : 'Verify Identity',
+              sub:     displayUser?.kycStatus === 'verified' ? 'KYC approved · All features unlocked' : 'Complete KYC to unlock higher limits',
               icon:    <Ico d={<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>} />,
               onClick: () => goTo('kyc'),
             },
