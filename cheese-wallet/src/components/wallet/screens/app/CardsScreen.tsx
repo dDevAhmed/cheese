@@ -89,7 +89,7 @@ export function CardDetailScreen() {
 
   const [cvv,       setCvv]       = useState<string | null>(null)
   const [cvvTimer,  setCvvTimer]  = useState(0)
-  const [frozen,    setFrozen]    = useState(card?.status === 'frozen' ?? false)
+  const [frozen,    setFrozen]    = useState(false)
   const [cvvPinModal, setCvvPinModal] = useState(false)
   const [cvvPin,    setCvvPin]    = useState('')
   const [cvvPinErr, setCvvPinErr] = useState(false)
