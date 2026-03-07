@@ -14,7 +14,7 @@ import { generateDeviceKey, signTransaction } from '@/lib/crypto/deviceSigning'
 import {
   AuthField, AuthBtn, AuthSteps, OtpBoxes,
   PwStrength, isStrongPassword, ErrorBanner,
-} from '../shared/UI'
+} from '../../shared/UI'
 import type { AuthScreen } from '@/types'
 
 

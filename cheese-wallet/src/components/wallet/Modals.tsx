@@ -10,7 +10,7 @@ import { useWalletAddress, useDepositNetworks } from '@/lib/hooks/useWallet'
 import { useBankTransfer, useBanks, useResolveAccount, useExchangeRate } from '@/lib/hooks/useBanks'
 import { useVerifyPin }        from '@/lib/hooks/useAuth'
 import { signTransaction, hashPin } from '@/lib/crypto/deviceSigning'
-import { AmountNumpad, PinPad, ErrorBanner, ScreenHeader } from '../shared/UI'
+import { AmountNumpad, PinPad, ErrorBanner, ScreenHeader } from './shared/UI'
 import type { ModalId } from '@/lib/stores/uiStore'
 
 // ── Modal overlay wrapper ─────────────────────────────────
