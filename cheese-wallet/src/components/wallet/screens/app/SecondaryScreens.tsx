@@ -117,9 +117,8 @@ export function NotificationsScreen() {
 // ════════════════════════════════════════════════════════
 export function TxDetailScreen() {
   const { txDetail, closeTxDetail, showToast } = useUiStore()
-  const tx = txDetail
-
-  if (!tx) return null
+  if (!txDetail) return null
+  const tx = txDetail!
 
   const isIn = tx.type === 'in'
 
