@@ -1,143 +1,42 @@
+// src/devices/entities/device.entity.ts
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  UpdateDateColumn, Index, Check,
-} from 'typeorm';
-
-export enum DevicePlatform {
-  IOS     = 'ios',
-  ANDROID = 'android',
-  WEB     = 'web',
-}
-
-export enum KeyAlgorithm {
-  ED25519   = 'ed25519',
-  SECP256K1 = 'secp256k1',
-}
-
-export enum DeviceStatus {
-  ACTIVE  = 'active',
-  REVOKED = 'revoked',
-}
+  Column, CreateDateColumn, Entity,
+  ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn,
+} from 'typeorm'
+import { User } from '../../auth/entities/user.entity'
 
 @Entity('devices')
-@Index('IDX_devices_user_id',         ['userId'])
-@Index('IDX_devices_user_whitelisted', ['userId', 'whitelisted'])
 export class Device {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id: string
 
-  @Column({ type: 'uuid' })
-  userId: string;
+  @Column({ name: 'device_id', unique: true })
+  deviceId: string
 
-  /**
-   * Hardware-bound OS identifier.
-   * iOS: identifierForVendor | Android: ANDROID_ID | Web: secure random UUID
-   * NOT a secret — authentication is via signature, not this ID.
-   */
-  @Column({ type: 'varchar', length: 255 })
-  @Index('UQ_devices_device_id', { unique: true })
-  deviceId: string;
+  @Column({ name: 'public_key', type: 'text' })
+  publicKey: string
 
-  @Column({ type: 'varchar', length: 255 })
-  deviceName: string;
+  @Column({ name: 'device_name', nullable: true })
+  deviceName: string | null
 
-  @Column({ type: 'enum', enum: DevicePlatform })
-  platform: DevicePlatform;
+  @Column({ name: 'last_seen', nullable: true })
+  lastSeen: Date | null
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  osVersion: string | null;
+  @Column({ nullable: true })
+  location: string | null
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  appVersion: string | null;
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  deviceModel: string | null;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date
 
-  /**
-   * Base64-encoded SubjectPublicKeyInfo (SPKI) DER blob.
-   *
-   * Why SPKI and not raw bytes?
-   *   Node's crypto.createVerify() requires a KeyObject. Importing raw
-   *   ed25519/secp256k1 bytes needs manual OID/DER prefix injection.
-   *   SPKI avoids that — createPublicKey({ key, format:'der', type:'spki' })
-   *   works directly. Client SDKs (Swift SecKey, Android KeyStore) can export
-   *   in this format natively.
-   *
-   * The private key NEVER leaves the device hardware (Secure Enclave / Keystore).
-   */
-  @Column({ type: 'text' })
-  publicKey: string;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date
 
-  @Column({
-    type: 'enum',
-    enum: KeyAlgorithm,
-    default: KeyAlgorithm.ED25519,
-  })
-  keyAlgorithm: KeyAlgorithm;
+  @ManyToOne(() => User, (u) => u.devices, { onDelete: 'CASCADE' })
+  user: User
 
-  /**
-   * Key version — incremented on each rotation.
-   * During rotation we briefly accept version N or N-1.
-   * After the grace window, all N-1 requests are rejected.
-   */
-  @Column({ type: 'smallint', default: 1 })
-  keyVersion: number;
-
-  /**
-   * SHA-256(base64PublicKey) stored as lowercase hex.
-   * Used in audit logs without needing to log the full key blob.
-   */
-  @Column({ type: 'char', length: 64 })
-  publicKeyFingerprint: string;
-
-  // ── Authorization ─────────────────────────────────────────────────────────
-
-  /**
-   * Master authorization flag — only whitelisted devices may submit
-   * signed transaction requests. Flipped to false on:
-   *   - Admin revocation
-   *   - Risk-engine trigger
-   *   - User "sign out all" request
-   */
-  @Column({ type: 'boolean', default: true })
-  whitelisted: boolean;
-
-  @Column({ type: 'enum', enum: DeviceStatus, default: DeviceStatus.ACTIVE })
-  status: DeviceStatus;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  revokedAt: Date | null;
-
-  @Column({ type: 'varchar', length: 200, nullable: true })
-  revocationReason: string | null;
-
-  /** userId of admin or literal 'system' for automated revocation */
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  revokedBy: string | null;
-
-  // ── Audit ─────────────────────────────────────────────────────────────────
-
-  @Column({ type: 'inet', nullable: true })
-  registrationIp: string | null;
-
-  /** Monotonic counter — useful for anomaly detection (sudden spike in tx) */
-  @Column({ type: 'bigint', default: 0 })
-  signatureCount: number;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  lastUsedAt: Date | null;
-
-  // ── Timestamps ────────────────────────────────────────────────────────────
-
-  @CreateDateColumn({ type: 'timestamptz' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt: Date;
-
-  // ── Computed ──────────────────────────────────────────────────────────────
-
-  get isAuthorized(): boolean {
-    return this.whitelisted && this.status === DeviceStatus.ACTIVE;
-  }
+  @Column({ name: 'user_id' })
+  userId: string
 }

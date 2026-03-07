@@ -1,0 +1,69 @@
+// src/banks/entities/bank-transfer.entity.ts
+import {
+  Column, CreateDateColumn, Entity,
+  ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn,
+} from 'typeorm'
+import { User } from '../../auth/entities/user.entity'
+
+export enum BankTransferStatus {
+  PENDING    = 'pending',
+  PROCESSING = 'processing',
+  COMPLETED  = 'completed',
+  FAILED     = 'failed',
+  REVERSED   = 'reversed',
+}
+
+@Entity('bank_transfers')
+export class BankTransfer {
+  @PrimaryGeneratedColumn('uuid')
+  id: string
+
+  @Column({ name: 'user_id' })
+  userId: string
+
+  @Column({ name: 'account_number' })
+  accountNumber: string
+
+  @Column({ name: 'bank_code' })
+  bankCode: string
+
+  @Column({ name: 'bank_name' })
+  bankName: string
+
+  @Column({ name: 'account_name' })
+  accountName: string
+
+  @Column({ name: 'amount_ngn', type: 'decimal', precision: 20, scale: 2 })
+  amountNgn: string
+
+  @Column({ name: 'amount_usdc', type: 'decimal', precision: 20, scale: 6 })
+  amountUsdc: string
+
+  @Column({ name: 'fee_usdc', type: 'decimal', precision: 20, scale: 6, default: 0 })
+  feeUsdc: string
+
+  @Column({ name: 'rate_applied', type: 'decimal', precision: 12, scale: 4 })
+  rateApplied: string
+
+  @Column({ type: 'enum', enum: BankTransferStatus, default: BankTransferStatus.PENDING })
+  status: BankTransferStatus
+
+  @Column({ unique: true })
+  reference: string
+
+  // Paystack transfer reference
+  @Column({ name: 'provider_reference', nullable: true })
+  providerReference: string | null
+
+  @Column({ name: 'failure_reason', nullable: true })
+  failureReason: string | null
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  user: User
+}

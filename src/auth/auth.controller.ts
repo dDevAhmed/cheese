@@ -1,159 +1,160 @@
+// src/auth/auth.controller.ts
 import {
-  Controller, Post, Get, Delete, Body, Param,
-  HttpCode, HttpStatus, Headers, UseGuards,
-} from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
-import { AuthService } from './auth.service';
-import { DirectSignupDto } from './dto/direct-signup.dto';
-import { WaitlistSignupDto } from './dto/waitlist-signup.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
-import { ResendOtpDto } from './dto/resend-otp.dto';
-import { LoginDto } from './dto/login.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { Public } from './decorators/public.decorator';
-import { CurrentUser } from './decorators/current-user.decorator';
-import { ClientIp } from './decorators/client-ip.decorator';
-import { User } from '../users/entities/user.entity';
+  Body, Controller, Get, HttpCode, HttpStatus,
+  Post, Req, Res, UseGuards,
+} from '@nestjs/common'
+import { Request, Response } from 'express'
+import { ConfigService }  from '@nestjs/config'
+import { Public }         from '../common/decorators/public.decorator'
+import { CurrentUser }    from '../common/decorators/current-user.decorator'
+import { OtpType }        from '../otp/entities/otp.entity'
+import { AuthService }    from './auth.service'
+import { JwtRefreshGuard } from './guards/jwt.guard'
+import {
+  ChangePinDto, ForgotPasswordDto, LoginDto, ResendOtpDto,
+  ResetPasswordDto, SignupDto, VerifyOtpDto, VerifyPinDto,
+} from './dto'
+import { User } from './entities/user.entity'
 
 @Controller('auth')
-@UseGuards(ThrottlerGuard)
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly config:      ConfigService,
+  ) {}
 
-  // ── Direct signup ─────────────────────────────────────────────────────────
-  /**
-   * POST /auth/signup
-   * Creates a PENDING user, sends OTP, returns userId for subsequent steps.
-   * Includes referral flow if referralCode present in body.
-   */
+  // ── POST /auth/signup ────────────────────────────────────
+  @Public()
   @Post('signup')
-  @Public()
-  @Throttle({ default: { ttl: 60_000, limit: 5 } })
-  @HttpCode(HttpStatus.CREATED)
-  signup(@Body() dto: DirectSignupDto, @ClientIp() ip: string) {
-    return this.authService.directSignup(dto, ip);
+  async signup(@Body() dto: SignupDto) {
+    return this.authService.signup(dto)
   }
 
-  // ── Waitlist continuation ─────────────────────────────────────────────────
-  /**
-   * POST /auth/signup/waitlist
-   * Accepts a signed token from the launch email link.
-   * Email + username are read from the verified token — not from user input.
-   */
-  @Post('signup/waitlist')
+  // ── POST /auth/verify-otp ────────────────────────────────
   @Public()
-  @Throttle({ default: { ttl: 60_000, limit: 5 } })
-  @HttpCode(HttpStatus.CREATED)
-  waitlistSignup(@Body() dto: WaitlistSignupDto, @ClientIp() ip: string) {
-    return this.authService.waitlistSignup(dto, ip);
-  }
-
-  // ── OTP Verification ──────────────────────────────────────────────────────
-  /**
-   * POST /auth/otp/verify
-   * Validates the 6-digit code. On success, activates the account.
-   */
-  @Post('otp/verify')
-  @Public()
-  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
-  verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.authService.verifyOtp(dto);
+  async verifyOtp(@Body() dto: VerifyOtpDto) {
+    return this.authService.verifyOtp(dto)
   }
 
-  // ── OTP Resend ────────────────────────────────────────────────────────────
-  /**
-   * POST /auth/otp/resend
-   * Invalidates previous OTP, issues a new one.
-   * Aggressively rate-limited: 3 per 2 minutes per IP.
-   */
-  @Post('otp/resend')
+  // ── POST /auth/resend-otp ────────────────────────────────
   @Public()
-  @Throttle({ default: { ttl: 120_000, limit: 3 } })
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async resendOtp(@Body() dto: ResendOtpDto, @ClientIp() ip: string) {
-    await this.authService.resendOtp(dto.userId, ip);
+  @Post('resend-otp')
+  @HttpCode(HttpStatus.OK)
+  async resendOtp(@Body() dto: ResendOtpDto) {
+    return this.authService.resendOtp(dto.email, dto.type as OtpType)
   }
 
-  // ── Login ─────────────────────────────────────────────────────────────────
-  /**
-   * POST /auth/login
-   * Accepts email OR username + password.
-   * Returns access token (15 min) + refresh token (7 days).
-   */
+  // ── POST /auth/login ─────────────────────────────────────
+  @Public()
   @Post('login')
-  @Public()
-  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @HttpCode(HttpStatus.OK)
-  login(
+  async login(
     @Body() dto: LoginDto,
-    @ClientIp() ip: string,
-    @Headers('user-agent') userAgent: string,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.login(dto, { ip, userAgent });
-  }
+    const result = await this.authService.login(dto, {
+      userAgent: req.headers['user-agent'],
+      ip:        req.ip,
+    })
 
-  // ── Token Refresh ─────────────────────────────────────────────────────────
-  /**
-   * POST /auth/token/refresh
-   * Rotates refresh token — old token is immediately revoked.
-   * Replay of revoked token → all sessions wiped (theft detection).
-   */
-  @Post('token/refresh')
-  @Public()
-  @Throttle({ default: { ttl: 60_000, limit: 20 } })
-  @HttpCode(HttpStatus.OK)
-  refreshTokens(
-    @Body() dto: RefreshTokenDto,
-    @ClientIp() ip: string,
-    @Headers('user-agent') userAgent: string,
-  ) {
-    return this.authService.refreshTokens(dto, { ip, userAgent });
-  }
+    // Set refresh token as httpOnly cookie
+    this.setRefreshCookie(res, result.tokens.refreshToken)
 
-  // ── Logout ────────────────────────────────────────────────────────────────
-  /**
-   * POST /auth/logout
-   * Revokes the provided refresh token (current session only).
-   */
-  @Post('logout')
-  @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async logout(@Body() dto: RefreshTokenDto) {
-    await this.authService.logout(dto.refreshToken);
-  }
-
-  // ── Logout All ────────────────────────────────────────────────────────────
-  /**
-   * DELETE /auth/sessions
-   * Revokes ALL refresh tokens for the authenticated user.
-   * Use on: password change, suspicious activity, "sign out everywhere".
-   */
-  @Delete('sessions')
-  @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async logoutAll(@CurrentUser() user: User) {
-    await this.authService.logoutAllDevices(user.id);
-  }
-
-  // ── Session health ────────────────────────────────────────────────────────
-  /**
-   * GET /auth/me
-   * Validates the access token and returns the authenticated user's profile.
-   * Use on app boot to check if stored access token is still valid.
-   */
-  @Get('me')
-  @UseGuards(JwtAuthGuard)
-  me(@CurrentUser() user: User) {
     return {
-      id:            user.id,
-      email:         user.email,
-      username:      user.username,
-      tier:          user.tier,
-      status:        user.status,
-      emailVerified: user.emailVerified,
-      createdAt:     user.createdAt,
-    };
+      user:   result.user,
+      tokens: { accessToken: result.tokens.accessToken },
+    }
+  }
+
+  // ── POST /auth/refresh ───────────────────────────────────
+  @Public()
+  @UseGuards(JwtRefreshGuard)
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(
+    @Req() req: Request & { user: { user: User; tokenHash: string } },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.refresh(
+      req.user.user,
+      req.user.tokenHash,
+      { userAgent: req.headers['user-agent'], ip: req.ip },
+    )
+    // Refresh token is rotated — set new cookie
+    // (new refresh token is issued inside authService.refresh)
+    return result
+  }
+
+  // ── POST /auth/logout ────────────────────────────────────
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(
+    @CurrentUser() user: User,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const rawToken  = req.cookies?.['refresh_token']
+    const { createHash } = require('crypto')
+    const tokenHash = rawToken
+      ? createHash('sha256').update(rawToken).digest('hex')
+      : ''
+
+    await this.authService.logout(user.id, tokenHash)
+    res.clearCookie('refresh_token')
+    return { message: 'Logged out' }
+  }
+
+  // ── GET /auth/me ──────────────────────────────────────────
+  @Get('me')
+  getMe(@CurrentUser() user: User) {
+    return this.authService.getMe(user)
+  }
+
+  // ── POST /auth/forgot-password ────────────────────────────
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto)
+    return { message: 'If an account exists, a reset code has been sent.' }
+  }
+
+  // ── POST /auth/reset-password ─────────────────────────────
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto)
+    return { message: 'Password reset successful' }
+  }
+
+  // ── POST /auth/verify-pin ─────────────────────────────────
+  @Post('verify-pin')
+  @HttpCode(HttpStatus.OK)
+  async verifyPin(@CurrentUser() user: User, @Body() dto: VerifyPinDto) {
+    return this.authService.verifyPin(user.id, dto)
+  }
+
+  // ── POST /auth/change-pin ─────────────────────────────────
+  @Post('change-pin')
+  @HttpCode(HttpStatus.OK)
+  async changePin(@CurrentUser() user: User, @Body() dto: ChangePinDto) {
+    await this.authService.changePin(user.id, dto)
+    return { message: 'PIN updated successfully' }
+  }
+
+  // ── Helpers ───────────────────────────────────────────────
+  private setRefreshCookie(res: Response, token: string) {
+    const days = 30
+    res.cookie('refresh_token', token, {
+      httpOnly: true,
+      secure:   this.config.get('app.nodeEnv') === 'production',
+      sameSite: 'strict',
+      maxAge:   days * 24 * 60 * 60 * 1000,
+      path:     '/auth/refresh',
+    })
   }
 }

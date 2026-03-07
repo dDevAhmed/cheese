@@ -1,63 +1,38 @@
+// src/otp/entities/otp.entity.ts
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  ManyToOne, JoinColumn, Index,
-} from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+  Column, CreateDateColumn, Entity, PrimaryGeneratedColumn,
+} from 'typeorm'
 
-export enum OtpPurpose {
-  EMAIL_VERIFICATION = 'email_verification',
-  PASSWORD_RESET     = 'password_reset',
-  LOGIN_MFA          = 'login_mfa',
+export enum OtpType {
+  EMAIL_VERIFY  = 'email_verify',
+  PHONE_VERIFY  = 'phone_verify',
+  PASSWORD_RESET = 'password_reset',
+  LOGIN_2FA     = 'login_2fa',
 }
 
 @Entity('otps')
-@Index('IDX_otps_user_purpose', ['userId', 'purpose', 'usedAt'])
-@Index('IDX_otps_expires_at',   ['expiresAt'])
 export class Otp {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id: string
 
-  @Column({ type: 'uuid' })
-  @Index('IDX_otps_user_id')
-  userId: string;
+  @Column()
+  email: string
 
-  /**
-   * SHA-256 hash of the raw 6-digit code.
-   * Raw code never persisted — only emailed to user.
-   */
-  @Column({ type: 'char', length: 64 })
-  codeHash: string;
+  @Column({ name: 'code_hash' })
+  codeHash: string
 
-  @Column({ type: 'enum', enum: OtpPurpose })
-  purpose: OtpPurpose;
+  @Column({ type: 'enum', enum: OtpType })
+  type: OtpType
 
-  @Column({ type: 'timestamptz' })
-  @Index('IDX_otps_expires')
-  expiresAt: Date;
+  @Column({ name: 'expires_at' })
+  expiresAt: Date
 
-  @Column({ type: 'timestamptz', nullable: true })
-  usedAt: Date | null;
+  @Column({ name: 'is_used', default: false })
+  isUsed: boolean
 
-  /** Attempt counter — lock after maxAttempts wrong entries */
-  @Column({ type: 'smallint', default: 0 })
-  attempts: number;
+  @Column({ name: 'attempts', default: 0 })
+  attempts: number
 
-  @Column({ type: 'smallint', default: 5 })
-  maxAttempts: number;
-
-  @Column({ type: 'inet', nullable: true })
-  requestedFromIp: string | null;
-
-  @CreateDateColumn({ type: 'timestamptz' })
-  createdAt: Date;
-
-  @ManyToOne(() => User, (u) => u.otps, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
-  user: User;
-
-  // ── Computed ──────────────────────────────────────────────────────────────
-  get isExpired(): boolean   { return new Date() > this.expiresAt; }
-  get isUsed(): boolean      { return this.usedAt !== null; }
-  get isExhausted(): boolean { return this.attempts >= this.maxAttempts; }
-  get isValid(): boolean     { return !this.isExpired && !this.isUsed && !this.isExhausted; }
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date
 }
