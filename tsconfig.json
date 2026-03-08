@@ -37,4 +37,5 @@
     "src/app.module.ts"
   ],
   "exclude": ["node_modules", "dist"]
+  "exclude": ["cheese-wallet", "node_modules", "dist"]
 }
