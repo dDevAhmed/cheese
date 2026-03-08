@@ -122,6 +122,12 @@ Cheese is a B2B2C payment settlement platform that enables businesses to accept 
 - Postman collection and OpenAPI specs
 - Swagger documentation for API docs
 
+**Waitlist API**
+- Join waitlist: `POST /v1/waitlist/join`
+- Username availability: `GET /v1/waitlist/check/:username`
+- Stats: `GET /v1/waitlist/stats`
+
+
 ### Advanced Features
 
 #### Security

@@ -1,44 +1,59 @@
 // src/waitlist/entities/waitlist-entry.entity.ts
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Index } from 'typeorm'
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Index,
+} from 'typeorm';
 
 export enum WaitlistStatus {
-  PENDING   = 'pending',    // waiting for launch
-  NOTIFIED  = 'notified',   // launch email sent
-  CONVERTED = 'converted',  // signed up as full user
+  PENDING = 'pending', // waiting for launch
+  NOTIFIED = 'notified', // launch email sent
+  CONVERTED = 'converted', // signed up as full user
 }
 
 @Entity('waitlist_entries')
 export class WaitlistEntry {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Index({ unique: true })
   @Column()
-  email: string
+  email: string;
 
   @Index({ unique: true })
   @Column()
-  username: string
+  username: string;
 
-  @Column({ type: 'enum', enum: WaitlistStatus, default: WaitlistStatus.PENDING })
-  status: WaitlistStatus
+  @Column({
+    type: 'varchar',
+    default: WaitlistStatus.PENDING,
+  })
+  status: WaitlistStatus;
 
   // Position in queue — assigned on signup
-  @Column({ nullable: true })
-  position: number | null
+  @Column({ type: 'integer', nullable: true })
+  position: number | null;
 
-  @Column({ name: 'referral_source', nullable: true })
-  referralSource: string | null
+  @Column({ name: 'referral_source', type: 'varchar', nullable: true })
+  referralSource: string | null;
 
-  @Column({ name: 'ip_address', nullable: true })
-  ipAddress: string | null
+  @Column({ name: 'ip_address', type: 'varchar', nullable: true })
+  ipAddress: string | null;
 
-  @Column({ name: 'notified_at', nullable: true })
-  notifiedAt: Date | null
+  @Column({ name: 'notified_at', type: 'integer', transformer: {
+    from: (value: number) => value ? new Date(value) : null,
+    to: (value: Date) => value ? value.getTime() : null,
+  }, nullable: true })
+  notifiedAt: Date | null;
 
-  @Column({ name: 'converted_at', nullable: true })
-  convertedAt: Date | null
+  @Column({ name: 'converted_at', type: 'integer', transformer: {
+    from: (value: number) => value ? new Date(value) : null,
+    to: (value: Date) => value ? value.getTime() : null,
+  }, nullable: true })
+  convertedAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date
+  createdAt: Date;
 }
