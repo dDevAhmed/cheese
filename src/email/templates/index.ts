@@ -2,7 +2,7 @@
 import {
   BRAND, baseLayout, goldDivider, primaryButton,
   otpBox, amountDisplay, detailRow, infoBox,
-} from './base'
+} from './base.js'
 
 // ─────────────────────────────────────────────────────────
 // 1. WAITLIST RESERVATION CONFIRMATION

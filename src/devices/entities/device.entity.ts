@@ -34,8 +34,10 @@ export class Device {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date
 
+  /*
   @ManyToOne(() => User, (u) => u.devices, { onDelete: 'CASCADE' })
   user: User
+  */
 
   @Column({ name: 'user_id' })
   userId: string

@@ -23,12 +23,12 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey:    config.get<string>('jwt.accessSecret'),
+      secretOrKey:    config.get<string>('jwt.accessSecret')!,
       ignoreExpiration: false,
     })
   }
 
-  async validate(payload: JwtPayload): Promise<User> {
+  async validate(payload: any): Promise<User> {
     const user = await this.userRepo.findOne({
       where: { id: payload.sub, isActive: true },
     })

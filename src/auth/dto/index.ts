@@ -1,6 +1,6 @@
 // src/auth/dto/index.ts
 import {
-  IsEmail, IsEnum, IsNotEmpty, IsString,
+  IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString,
   Matches, MaxLength, MinLength,
 } from 'class-validator'
 import {
@@ -33,16 +33,16 @@ export class SignupDto {
   @IsString() @MinLength(8) @MaxLength(64)
   password: string
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'MFkwEwYHKoZIzj0CAQY...',
     description: 'ECDSA P-256 public key in base64url or PEM format — used to verify future device signatures',
   })
-  @IsString() @IsNotEmpty()
-  devicePublicKey: string
+  @IsString() @IsOptional()
+  devicePublicKey?: string
 
-  @ApiProperty({ example: 'device-uuid-v4-here', description: 'Unique identifier for this device installation' })
-  @IsString() @IsNotEmpty()
-  deviceId: string
+  @ApiPropertyOptional({ example: 'device-uuid-v4-here', description: 'Unique identifier for this device installation' })
+  @IsString() @IsOptional()
+  deviceId?: string
 }
 
 export class VerifyOtpDto {
@@ -56,7 +56,7 @@ export class VerifyOtpDto {
 
   @ApiProperty({
     enum: OtpType,
-    example: OtpType.SIGNUP,
+    example: OtpType.EMAIL_VERIFY,
     description: 'Type of OTP being verified',
   })
   @IsEnum(OtpType)
@@ -70,7 +70,7 @@ export class ResendOtpDto {
 
   @ApiProperty({
     enum: OtpType,
-    example: OtpType.SIGNUP,
+    example: OtpType.EMAIL_VERIFY,
     description: 'Type of OTP to resend',
   })
   @IsEnum(OtpType)
@@ -89,16 +89,16 @@ export class LoginDto {
   @IsString() @IsNotEmpty()
   password: string
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'base64-ecdsa-signature-here',
     description: 'ECDSA P-256 signature of SHA256(timestamp) in base64, proving device ownership',
   })
-  @IsString() @IsNotEmpty()
-  deviceSignature: string
+  @IsString() @IsOptional()
+  deviceSignature?: string
 
-  @ApiProperty({ example: 'device-uuid-v4-here', description: 'Device ID matching the registered public key' })
-  @IsString() @IsNotEmpty()
-  deviceId: string
+  @ApiPropertyOptional({ example: 'device-uuid-v4-here', description: 'Device ID matching the registered public key' })
+  @IsString() @IsOptional()
+  deviceId?: string
 }
 
 export class ForgotPasswordDto {
@@ -129,9 +129,9 @@ export class VerifyPinDto {
   @IsString() @IsNotEmpty()
   pinHash: string
 
-  @ApiProperty({ example: 'device-uuid-v4-here', description: 'Device ID used as the HMAC key' })
-  @IsString() @IsNotEmpty()
-  deviceId: string
+  @ApiPropertyOptional({ example: 'device-uuid-v4-here', description: 'Device ID used as the HMAC key' })
+  @IsString() @IsOptional()
+  deviceId?: string
 }
 
 export class ChangePinDto {
@@ -149,14 +149,14 @@ export class ChangePinDto {
   @IsString() @IsNotEmpty()
   newPinHash: string
 
-  @ApiProperty({ example: 'device-uuid-v4-here', description: 'Device ID used as the HMAC key' })
-  @IsString() @IsNotEmpty()
-  deviceId: string
+  @ApiPropertyOptional({ example: 'device-uuid-v4-here', description: 'Device ID used as the HMAC key' })
+  @IsString() @IsOptional()
+  deviceId?: string
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'base64-ecdsa-signature-here',
     description: 'ECDSA P-256 device signature authorising the PIN change',
   })
-  @IsString() @IsNotEmpty()
-  deviceSignature: string
+  @IsString() @IsOptional()
+  deviceSignature?: string
 }

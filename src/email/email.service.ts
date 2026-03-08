@@ -13,7 +13,8 @@ import {
   moneySent,
   kycApproved,
   tierUpgrade,
-} from './templates'
+  waitlistReminder,
+} from './templates/index.js'
 
 interface SendPayload {
   to:      string
@@ -290,7 +291,6 @@ export class EmailService {
     daysOnList: number
     position?:  number
   }): Promise<void> {
-    const { waitlistReminder } = await import('./templates')
     const { subject, html } = waitlistReminder({
       email:      params.to,
       username:   params.username,

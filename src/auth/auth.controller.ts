@@ -7,7 +7,7 @@ import {
   ApiTags, ApiBearerAuth, ApiOperation,
   ApiResponse, ApiBody, ApiCookieAuth,
 } from '@nestjs/swagger'
-import { Request, Response }  from 'express'
+import type { Request, Response }  from 'express'
 import { ConfigService }      from '@nestjs/config'
 import { Public }             from '../common/decorators/public.decorator'
 import { CurrentUser }        from '../common/decorators/current-user.decorator'

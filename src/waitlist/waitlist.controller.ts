@@ -5,7 +5,7 @@ import {
 import {
   ApiTags, ApiOperation, ApiResponse, ApiParam,
 } from '@nestjs/swagger'
-import { Request }        from 'express'
+import type { Request }        from 'express'
 import { Public }         from '../common/decorators/public.decorator'
 import { WaitlistService } from './waitlist.service'
 import { JoinWaitlistDto } from './dto'

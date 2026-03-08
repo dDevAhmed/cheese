@@ -21,13 +21,13 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
       jwtFromRequest: ExtractJwt.fromExtractors([
         (req: Request) => req?.cookies?.['refresh_token'] || null,
       ]),
-      secretOrKey:    config.get<string>('jwt.refreshSecret'),
+      secretOrKey:    config.get<string>('jwt.refreshSecret')!,
       ignoreExpiration: false,
       passReqToCallback: true,
-    })
+    } as any)
   }
 
-  async validate(req: Request, payload: { sub: string }): Promise<{ user: User; tokenHash: string }> {
+  async validate(req: Request, payload: any): Promise<{ user: User; tokenHash: string }> {
     const rawToken = req.cookies?.['refresh_token']
     if (!rawToken) throw new UnauthorizedException('No refresh token')
 

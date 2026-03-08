@@ -55,7 +55,7 @@ export class WaitlistService {
     )
 
     this.emailService
-      .sendWaitlistConfirmation({ to: entry.email, username: entry.username, position: entry.position })
+      .sendWaitlistConfirmation({ to: entry.email, username: entry.username, position: entry.position ?? undefined })
       .catch((err) => this.logger.error(`Waitlist confirm email failed: ${err.message}`))
 
     this.logger.log(`Waitlist: @${entry.username} (${entry.email}) — #${position}`)
@@ -160,7 +160,7 @@ export class WaitlistService {
             username:   entry.username,
             signupUrl,
             daysOnList,
-            position:   entry.position,
+            position:   entry.position ?? undefined,
           })
           sent++
           this.logger.log(`Reminder sent → ${entry.email} (@${entry.username}, day ${daysOnList})`)

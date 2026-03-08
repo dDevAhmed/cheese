@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { OtpService }    from '../otp/otp.service'
 import { OtpType }       from '../otp/entities/otp.entity'
 import { StellarService } from '../stellar/stellar.service'
-import { Device }         from '../devices/entities/device.entity'
+// import { Device }         from '../devices/entities/device.entity'
 import {
   ChangePinDto, ForgotPasswordDto, LoginDto,
   ResetPasswordDto, SignupDto, VerifyOtpDto, VerifyPinDto,
@@ -33,7 +33,7 @@ export class AuthService {
   constructor(
     @InjectRepository(User)          private readonly userRepo:  Repository<User>,
     @InjectRepository(RefreshToken)  private readonly rtRepo:    Repository<RefreshToken>,
-    @InjectRepository(Device)        private readonly deviceRepo: Repository<Device>,
+    // @InjectRepository(Device)        private readonly deviceRepo: Repository<Device>,
     private readonly jwtService:     JwtService,
     private readonly config:         ConfigService,
     private readonly otpService:     OtpService,
@@ -84,13 +84,15 @@ export class AuthService {
     // Mark waitlist entry as converted (non-blocking)
     this.waitlistService.markConverted(dto.email).catch(() => {})
 
-    // Register the device
+    /* 
+    // Register the device (DevicesModule disabled)
     await this.deviceRepo.save(this.deviceRepo.create({
       userId:     user.id,
       deviceId:   dto.deviceId,
       publicKey:  dto.devicePublicKey,
       deviceName: 'Primary Device',
     }))
+    */
 
     // Send email verification OTP
     await this.otpService.sendOtp(dto.email, OtpType.EMAIL_VERIFY, { fullName: dto.fullName })
@@ -136,7 +138,8 @@ export class AuthService {
     const passwordOk = await bcrypt.compare(dto.password, user.passwordHash)
     if (!passwordOk) throw new UnauthorizedException('Invalid credentials')
 
-    // Verify device signature
+    /*
+    // Verify device signature (DevicesModule disabled)
     const device = await this.deviceRepo.findOne({
       where: { deviceId: dto.deviceId, userId: user.id, isActive: true },
     })
@@ -154,8 +157,9 @@ export class AuthService {
 
     // Update device last seen
     await this.deviceRepo.update({ id: device.id }, { lastSeen: new Date() })
+    */
 
-    const tokens = await this.issueTokens(user, dto.deviceId, meta)
+    const tokens = await this.issueTokens(user, dto.deviceId || 'legacy', meta)
     return { user: this.sanitiseUser(user), tokens }
   }
 
@@ -197,6 +201,7 @@ export class AuthService {
   // ── Verify PIN ────────────────────────────────────────────
   async verifyPin(userId: string, dto: VerifyPinDto): Promise<{ valid: boolean }> {
     const user = await this.userRepo.findOne({ where: { id: userId } })
+    if (!user) throw new NotFoundException('User not found')
     if (!user.pinHash) throw new BadRequestException('PIN not set')
 
     const isValid = timingSafeEqual(
@@ -214,6 +219,7 @@ export class AuthService {
   // ── Change PIN ────────────────────────────────────────────
   async changePin(userId: string, dto: ChangePinDto): Promise<void> {
     const user = await this.userRepo.findOne({ where: { id: userId } })
+    if (!user) throw new NotFoundException('User not found')
 
     // If pin already set, verify current pin first
     if (user.pinHash) {

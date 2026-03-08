@@ -21,5 +21,20 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
-  }
+  },
+  "include": [
+    "src/auth/**/*",
+    "src/waitlist/**/*",
+    "src/profile/**/*",
+    "src/otp/**/*",
+    "src/email/**/*",
+    "src/stellar/**/*",
+    "src/common/**/*",
+    "src/config/**/*",
+    "src/devices/entities/**/*",
+    "src/transactions/entities/**/*",
+    "src/main.ts",
+    "src/app.module.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
 }

@@ -7,7 +7,7 @@ import { OtpModule }      from '../otp/otp.module'
 import { EmailModule }    from '../email/email.module'
 import { WaitlistModule } from '../waitlist/waitlist.module'
 import { StellarModule }  from '../stellar/stellar.module'
-import { Device }         from '../devices/entities/device.entity'
+// import { Device }         from '../devices/entities/device.entity'
 import { AuthController } from './auth.controller'
 import { AuthService }    from './auth.service'
 import { RefreshToken }   from './entities/refresh-token.entity'
@@ -17,7 +17,7 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, RefreshToken, Device]),
+    TypeOrmModule.forFeature([User, RefreshToken]),
     PassportModule,
     JwtModule.register({}),   // secrets supplied per sign() call
     OtpModule,

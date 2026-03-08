@@ -91,6 +91,8 @@ export class Transaction {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date
 
+  /*
   @ManyToOne(() => User, (u) => u.transactions, { onDelete: 'CASCADE' })
   user: User
+  */
 }

@@ -4,9 +4,9 @@ import {
   OneToMany, PrimaryGeneratedColumn, UpdateDateColumn,
 } from 'typeorm'
 import { Exclude } from 'class-transformer'
-import { Device }      from '../../devices/entities/device.entity'
+// import { Device }      from '../../devices/entities/device.entity'
 import { RefreshToken } from './refresh-token.entity'
-import { Transaction } from '../../transactions/entities/transaction.entity'
+// import { Transaction } from '../../transactions/entities/transaction.entity'
 
 export enum KycStatus { PENDING = 'pending', SUBMITTED = 'submitted', VERIFIED = 'verified', REJECTED = 'rejected' }
 export enum Tier { SILVER = 'silver', GOLD = 'gold', BLACK = 'black' }
@@ -65,12 +65,16 @@ export class User {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date
 
+  /*
   @OneToMany(() => Device, (d) => d.user, { cascade: true })
   devices: Device[]
+  */
 
   @OneToMany(() => RefreshToken, (rt) => rt.user, { cascade: true })
   refreshTokens: RefreshToken[]
 
+  /*
   @OneToMany(() => Transaction, (tx) => tx.user)
   transactions: Transaction[]
+  */
 }
