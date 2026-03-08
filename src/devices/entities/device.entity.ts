@@ -23,7 +23,10 @@ export class Device {
   @Column({ name: 'device_name', type: 'varchar', nullable: true })
   deviceName: string | null;
 
-  @Column({ name: 'last_seen', type: 'timestamp', nullable: true })
+  @Column({ name: 'last_seen', type: 'integer', transformer: {
+    from: (value: number) => value ? new Date(value) : null,
+    to: (value: Date) => value ? value.getTime() : null,
+  }, nullable: true })
   lastSeen: Date | null;
 
   @Column({ type: 'varchar', nullable: true })

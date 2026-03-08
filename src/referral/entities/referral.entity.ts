@@ -26,8 +26,7 @@ export class Referral {
   refereeId: string;
 
   @Column({
-    type: 'enum',
-    enum: ReferralStatus,
+    type: 'varchar',
     default: ReferralStatus.PENDING,
   })
   status: ReferralStatus;
@@ -42,7 +41,10 @@ export class Referral {
   })
   rewardUsdc: string | null;
 
-  @Column({ name: 'rewarded_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'rewarded_at', type: 'integer', transformer: {
+    from: (value: number) => value ? new Date(value) : null,
+    to: (value: Date) => value ? value.getTime() : null,
+  }, nullable: true })
   rewardedAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })

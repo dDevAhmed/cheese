@@ -25,6 +25,8 @@ async function bootstrap() {
   // ── CORS ─────────────────────────────────────────────────
   const allowedOrigins = [
     origin,
+    // allow requests from same host (swagger UI, server-side callbacks)
+    `http://localhost:${port}`,
     'https://cheesepay.xyz',
     'https://www.cheesepay.xyz',
   ].filter(Boolean);

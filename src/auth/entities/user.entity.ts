@@ -29,16 +29,16 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ unique: true })
   email: string;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ unique: true })
   phone: string;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ unique: true })
   username: string;
 
-  @Column({ name: 'full_name', type: 'varchar' })
+  @Column({ name: 'full_name' })
   fullName: string;
 
   @Exclude()
@@ -51,13 +51,12 @@ export class User {
 
   @Column({
     name: 'kyc_status',
-    type: 'enum',
-    enum: KycStatus,
+    type: 'varchar',
     default: KycStatus.PENDING,
   })
   kycStatus: KycStatus;
 
-  @Column({ type: 'enum', enum: Tier, default: Tier.SILVER })
+  @Column({ type: 'varchar', default: Tier.SILVER })
   tier: Tier;
 
   @Column({ name: 'is_active', default: true })

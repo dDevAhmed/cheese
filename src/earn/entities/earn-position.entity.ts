@@ -23,7 +23,7 @@ export class EarnPosition {
   @Column({ name: 'user_id' })
   userId: string;
 
-  @Column({ type: 'enum', enum: EarnStatus, default: EarnStatus.ACTIVE })
+  @Column({ type: 'varchar', default: EarnStatus.ACTIVE })
   status: EarnStatus;
 
   // Principal deposited into earn
@@ -66,7 +66,10 @@ export class EarnPosition {
   })
   currentApy: string;
 
-  @Column({ name: 'last_yield_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'last_yield_at', type: 'integer', transformer: {
+    from: (value: number) => value ? new Date(value) : null,
+    to: (value: Date) => value ? value.getTime() : null,
+  }, nullable: true })
   lastYieldAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })

@@ -24,10 +24,13 @@ export class Otp {
   @Column({ name: 'code_hash' })
   codeHash: string;
 
-  @Column({ type: 'enum', enum: OtpType })
+  @Column({ type: 'varchar' })
   type: OtpType;
 
-  @Column({ name: 'expires_at', type: 'timestamp' })
+  @Column({ name: 'expires_at', type: 'integer', transformer: {
+    from: (value: number) => new Date(value),
+    to: (value: Date) => value.getTime(),
+  } })
   expiresAt: Date;
 
   @Column({ name: 'is_used', default: false })

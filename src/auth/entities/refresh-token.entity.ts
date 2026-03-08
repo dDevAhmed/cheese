@@ -17,10 +17,13 @@ export class RefreshToken {
   @Column({ name: 'token_hash', unique: true })
   tokenHash: string;
 
-  @Column({ name: 'device_identifier', type: 'varchar', nullable: true })
+  @Column({ name: 'device_id', type: 'varchar', nullable: true })
   deviceId: string | null;
 
-  @Column({ name: 'expires_at', type: 'timestamp' })
+  @Column({ name: 'expires_at', type: 'integer', transformer: {
+    from: (value: number) => new Date(value),
+    to: (value: Date) => value.getTime(),
+  } })
   expiresAt: Date;
 
   @Column({ name: 'is_revoked', default: false })

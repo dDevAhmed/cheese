@@ -37,10 +37,10 @@ export class Transaction {
   @Column({ name: 'user_id' })
   userId: string;
 
-  @Column({ type: 'enum', enum: TxType })
+  @Column({ type: 'varchar' })
   type: TxType;
 
-  @Column({ type: 'enum', enum: TxStatus, default: TxStatus.PENDING })
+  @Column({ type: 'varchar', default: TxStatus.PENDING })
   status: TxStatus;
 
   // Amount in USDC — stored as string to preserve decimals

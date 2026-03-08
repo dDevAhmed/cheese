@@ -46,10 +46,10 @@ export class VirtualCard {
   @Column({ name: 'holder_name' })
   holderName: string;
 
-  @Column({ type: 'enum', enum: CardNetwork, default: CardNetwork.MASTERCARD })
+  @Column({ type: 'varchar', default: CardNetwork.MASTERCARD })
   network: CardNetwork;
 
-  @Column({ type: 'enum', enum: CardStatus, default: CardStatus.ACTIVE })
+  @Column({ type: 'varchar', default: CardStatus.ACTIVE })
   status: CardStatus;
 
   @Column({

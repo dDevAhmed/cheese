@@ -22,19 +22,19 @@ export class BankTransfer {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'user_id', type: 'varchar' })
+  @Column({ name: 'user_id' })
   userId: string;
 
-  @Column({ name: 'account_number', type: 'varchar' })
+  @Column({ name: 'account_number' })
   accountNumber: string;
 
-  @Column({ name: 'bank_code', type: 'varchar' })
+  @Column({ name: 'bank_code' })
   bankCode: string;
 
-  @Column({ name: 'bank_name', type: 'varchar' })
+  @Column({ name: 'bank_name' })
   bankName: string;
 
-  @Column({ name: 'account_name', type: 'varchar' })
+  @Column({ name: 'account_name' })
   accountName: string;
 
   @Column({ name: 'amount_ngn', type: 'decimal', precision: 20, scale: 2 })
@@ -56,20 +56,19 @@ export class BankTransfer {
   rateApplied: string;
 
   @Column({
-    type: 'enum',
-    enum: BankTransferStatus,
+    type: 'varchar',
     default: BankTransferStatus.PENDING,
   })
   status: BankTransferStatus;
 
-  @Column({ unique: true, type: 'varchar' })
+  @Column({ unique: true })
   reference: string;
 
   // Paystack transfer reference
-  @Column({ name: 'provider_reference', type: 'varchar', nullable: true })
+  @Column({ name: 'provider_reference', nullable: true })
   providerReference: string | null;
 
-  @Column({ name: 'failure_reason', type: 'varchar', nullable: true })
+  @Column({ name: 'failure_reason', nullable: true })
   failureReason: string | null;
 
   @CreateDateColumn({ name: 'created_at' })

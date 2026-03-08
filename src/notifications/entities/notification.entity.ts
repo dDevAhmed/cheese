@@ -23,8 +23,7 @@ export class Notification {
   userId: string;
 
   @Column({
-    type: 'enum',
-    enum: NotificationType,
+    type: 'varchar',
     default: NotificationType.SYSTEM,
   })
   type: NotificationType;

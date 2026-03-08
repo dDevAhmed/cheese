@@ -80,12 +80,14 @@ import { PaymentRequest } from './paylink/entities/payment-request.entity';
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        type: 'postgres',
+        type: config.get('app.nodeEnv') === 'production' ? 'postgres' : 'sqlite',
         host: config.get('db.host'),
         port: config.get('db.port'),
         username: config.get('db.user'),
         password: config.get('db.password'),
-        database: config.get('db.name'),
+        database: config.get('app.nodeEnv') === 'production' 
+          ? config.get('db.name')
+          : (config.get('db.name') + '.db'),
         entities: [
           User,
           RefreshToken,

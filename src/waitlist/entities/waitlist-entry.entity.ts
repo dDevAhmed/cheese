@@ -27,14 +27,13 @@ export class WaitlistEntry {
   username: string;
 
   @Column({
-    type: 'enum',
-    enum: WaitlistStatus,
+    type: 'varchar',
     default: WaitlistStatus.PENDING,
   })
   status: WaitlistStatus;
 
   // Position in queue — assigned on signup
-  @Column({ type: 'int', nullable: true })
+  @Column({ type: 'integer', nullable: true })
   position: number | null;
 
   @Column({ name: 'referral_source', type: 'varchar', nullable: true })
@@ -43,10 +42,16 @@ export class WaitlistEntry {
   @Column({ name: 'ip_address', type: 'varchar', nullable: true })
   ipAddress: string | null;
 
-  @Column({ name: 'notified_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'notified_at', type: 'integer', transformer: {
+    from: (value: number) => value ? new Date(value) : null,
+    to: (value: Date) => value ? value.getTime() : null,
+  }, nullable: true })
   notifiedAt: Date | null;
 
-  @Column({ name: 'converted_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'converted_at', type: 'integer', transformer: {
+    from: (value: number) => value ? new Date(value) : null,
+    to: (value: Date) => value ? value.getTime() : null,
+  }, nullable: true })
   convertedAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
