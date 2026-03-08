@@ -1,5 +1,5 @@
 // src/app.module.ts — ALL PHASES (1-7)
-import { Module }           from '@nestjs/common'
+import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TypeOrmModule }    from '@nestjs/typeorm'
 import { ThrottlerModule, ThrottlerGuard }  from '@nestjs/throttler'
