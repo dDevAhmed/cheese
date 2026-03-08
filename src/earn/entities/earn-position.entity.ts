@@ -66,7 +66,7 @@ export class EarnPosition {
   })
   currentApy: string;
 
-  @Column({ name: 'last_yield_at', nullable: true })
+  @Column({ name: 'last_yield_at', type: 'timestamp', nullable: true })
   lastYieldAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })

@@ -54,7 +54,7 @@ export class PaymentRequest {
   status: PayLinkStatus;
 
   // ── Expiry — default 7 days ───────────────────────────────
-  @Column({ name: 'expires_at' })
+  @Column({ name: 'expires_at', type: 'timestamp' })
   expiresAt: Date;
 
   // ── Settled transaction reference ────────────────────────
@@ -65,7 +65,7 @@ export class PaymentRequest {
   @Column({ name: 'settled_tx_hash', nullable: true })
   settledTxHash: string | null;
 
-  @Column({ name: 'paid_at', nullable: true })
+  @Column({ name: 'paid_at', type: 'timestamp', nullable: true })
   paidAt: Date | null;
 
   // IP of whoever paid (for fraud logging)

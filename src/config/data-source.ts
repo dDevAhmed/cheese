@@ -15,6 +15,6 @@ export default new DataSource({
   database: process.env.DB_NAME || 'cheese_wallet',
   entities: [join(__dirname, '../**/*.entity.{ts,js}')],
   migrations: [join(__dirname, '../migrations/*.{ts,js}')],
-  synchronize: false,
+  synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV !== 'production',
 });

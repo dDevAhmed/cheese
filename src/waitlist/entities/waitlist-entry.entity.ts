@@ -34,19 +34,19 @@ export class WaitlistEntry {
   status: WaitlistStatus;
 
   // Position in queue — assigned on signup
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   position: number | null;
 
-  @Column({ name: 'referral_source', nullable: true })
+  @Column({ name: 'referral_source', type: 'varchar', nullable: true })
   referralSource: string | null;
 
-  @Column({ name: 'ip_address', nullable: true })
+  @Column({ name: 'ip_address', type: 'varchar', nullable: true })
   ipAddress: string | null;
 
-  @Column({ name: 'notified_at', nullable: true })
+  @Column({ name: 'notified_at', type: 'timestamp', nullable: true })
   notifiedAt: Date | null;
 
-  @Column({ name: 'converted_at', nullable: true })
+  @Column({ name: 'converted_at', type: 'timestamp', nullable: true })
   convertedAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })

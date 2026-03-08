@@ -42,7 +42,7 @@ export class Referral {
   })
   rewardUsdc: string | null;
 
-  @Column({ name: 'rewarded_at', nullable: true })
+  @Column({ name: 'rewarded_at', type: 'timestamp', nullable: true })
   rewardedAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })

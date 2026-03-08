@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Device } from '../../devices/entities/device.entity';
 
 @Entity('refresh_tokens')
 export class RefreshToken {
@@ -16,19 +17,19 @@ export class RefreshToken {
   @Column({ name: 'token_hash', unique: true })
   tokenHash: string;
 
-  @Column({ name: 'device_id', nullable: true })
+  @Column({ name: 'device_identifier', type: 'varchar', nullable: true })
   deviceId: string | null;
 
-  @Column({ name: 'expires_at' })
+  @Column({ name: 'expires_at', type: 'timestamp' })
   expiresAt: Date;
 
   @Column({ name: 'is_revoked', default: false })
   isRevoked: boolean;
 
-  @Column({ name: 'user_agent', nullable: true })
+  @Column({ name: 'user_agent', type: 'varchar', nullable: true })
   userAgent: string | null;
 
-  @Column({ name: 'ip_address', nullable: true })
+  @Column({ name: 'ip_address', type: 'varchar', nullable: true })
   ipAddress: string | null;
 
   @CreateDateColumn({ name: 'created_at' })

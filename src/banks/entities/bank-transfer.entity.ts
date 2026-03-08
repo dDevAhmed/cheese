@@ -22,19 +22,19 @@ export class BankTransfer {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'user_id' })
+  @Column({ name: 'user_id', type: 'varchar' })
   userId: string;
 
-  @Column({ name: 'account_number' })
+  @Column({ name: 'account_number', type: 'varchar' })
   accountNumber: string;
 
-  @Column({ name: 'bank_code' })
+  @Column({ name: 'bank_code', type: 'varchar' })
   bankCode: string;
 
-  @Column({ name: 'bank_name' })
+  @Column({ name: 'bank_name', type: 'varchar' })
   bankName: string;
 
-  @Column({ name: 'account_name' })
+  @Column({ name: 'account_name', type: 'varchar' })
   accountName: string;
 
   @Column({ name: 'amount_ngn', type: 'decimal', precision: 20, scale: 2 })
@@ -62,14 +62,14 @@ export class BankTransfer {
   })
   status: BankTransferStatus;
 
-  @Column({ unique: true })
+  @Column({ unique: true, type: 'varchar' })
   reference: string;
 
   // Paystack transfer reference
-  @Column({ name: 'provider_reference', nullable: true })
+  @Column({ name: 'provider_reference', type: 'varchar', nullable: true })
   providerReference: string | null;
 
-  @Column({ name: 'failure_reason', nullable: true })
+  @Column({ name: 'failure_reason', type: 'varchar', nullable: true })
   failureReason: string | null;
 
   @CreateDateColumn({ name: 'created_at' })

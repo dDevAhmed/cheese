@@ -20,13 +20,13 @@ export class Device {
   @Column({ name: 'public_key', type: 'text' })
   publicKey: string;
 
-  @Column({ name: 'device_name', nullable: true })
+  @Column({ name: 'device_name', type: 'varchar', nullable: true })
   deviceName: string | null;
 
-  @Column({ name: 'last_seen', nullable: true })
+  @Column({ name: 'last_seen', type: 'timestamp', nullable: true })
   lastSeen: Date | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   location: string | null;
 
   @Column({ name: 'is_active', default: true })

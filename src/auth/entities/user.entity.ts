@@ -29,24 +29,24 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', unique: true })
   email: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', unique: true })
   phone: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', unique: true })
   username: string;
 
-  @Column({ name: 'full_name' })
+  @Column({ name: 'full_name', type: 'varchar' })
   fullName: string;
 
   @Exclude()
-  @Column({ name: 'password_hash' })
+  @Column({ name: 'password_hash', type: 'varchar' })
   passwordHash: string;
 
   @Exclude()
-  @Column({ name: 'pin_hash', nullable: true })
+  @Column({ name: 'pin_hash', type: 'varchar', nullable: true })
   pinHash: string | null;
 
   @Column({
@@ -70,7 +70,7 @@ export class User {
   phoneVerified: boolean;
 
   // Stellar custodial wallet
-  @Column({ name: 'stellar_public_key', nullable: true, unique: true })
+  @Column({ name: 'stellar_public_key', type: 'varchar', nullable: true, unique: true })
   stellarPublicKey: string | null;
 
   @Exclude()

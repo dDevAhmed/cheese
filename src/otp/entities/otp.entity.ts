@@ -27,7 +27,7 @@ export class Otp {
   @Column({ type: 'enum', enum: OtpType })
   type: OtpType;
 
-  @Column({ name: 'expires_at' })
+  @Column({ name: 'expires_at', type: 'timestamp' })
   expiresAt: Date;
 
   @Column({ name: 'is_used', default: false })

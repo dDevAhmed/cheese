@@ -76,35 +76,35 @@ export class Transaction {
   rateApplied: string | null;
 
   // Send / Receive party
-  @Column({ name: 'recipient_username', nullable: true })
+  @Column({ name: 'recipient_username', type: 'varchar', nullable: true })
   recipientUsername: string | null;
 
-  @Column({ name: 'recipient_address', nullable: true })
+  @Column({ name: 'recipient_address', type: 'varchar', nullable: true })
   recipientAddress: string | null;
 
-  @Column({ name: 'recipient_name', nullable: true })
+  @Column({ name: 'recipient_name', type: 'varchar', nullable: true })
   recipientName: string | null;
 
-  @Column({ name: 'bank_name', nullable: true })
+  @Column({ name: 'bank_name', type: 'varchar', nullable: true })
   bankName: string | null;
 
-  @Column({ name: 'account_number', nullable: true })
+  @Column({ name: 'account_number', type: 'varchar', nullable: true })
   accountNumber: string | null;
 
   // Stellar on-chain
-  @Column({ name: 'tx_hash', nullable: true, unique: true })
+  @Column({ name: 'tx_hash', type: 'varchar', nullable: true, unique: true })
   txHash: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   network: string | null;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', unique: true })
   reference: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   description: string | null;
 
-  @Column({ name: 'failure_reason', nullable: true })
+  @Column({ name: 'failure_reason', type: 'varchar', nullable: true })
   failureReason: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
